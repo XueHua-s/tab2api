@@ -48,18 +48,16 @@ export const conversationIdSchema = z
  */
 export const reasoningEffortSchema = z.enum(['minimal', 'low', 'medium', 'high', 'xhigh']);
 
-export const chatCompletionRequestSchema = z
-  .object({
-    model: z.string().min(1),
-    messages: z.array(chatMessageSchema).min(1).max(200),
-    stream: z.boolean().default(false),
-    user: z.string().optional(),
-    conversation_id: conversationIdSchema.optional(),
-    /** Run this turn in a Temporary Chat that is not kept in account history. */
-    temporary: z.boolean().optional(),
-    reasoning_effort: reasoningEffortSchema.optional(),
-  })
-  .strict();
+export const chatCompletionRequestSchema = z.looseObject({
+  model: z.string().min(1),
+  messages: z.array(chatMessageSchema).min(1).max(200),
+  stream: z.boolean().default(false),
+  user: z.string().optional(),
+  conversation_id: conversationIdSchema.optional(),
+  /** Run this turn in a Temporary Chat that is not kept in account history. */
+  temporary: z.boolean().optional(),
+  reasoning_effort: reasoningEffortSchema.optional(),
+});
 
 const responseInputMessage = z
   .object({
@@ -68,21 +66,19 @@ const responseInputMessage = z
   })
   .strict();
 
-export const responsesRequestSchema = z
-  .object({
-    model: z.string().min(1),
-    input: z.union([z.string().min(1), z.array(responseInputMessage).min(1).max(200)]),
-    instructions: z.string().min(1).optional(),
-    stream: z.boolean().default(false),
-    user: z.string().optional(),
-    conversation_id: conversationIdSchema.optional(),
-    /** Run this turn in a Temporary Chat that is not kept in account history. */
-    temporary: z.boolean().optional(),
-    reasoning_effort: reasoningEffortSchema.optional(),
-    /** Anthropic-style alias accepted for parity with /v1/messages; same effect. */
-    reasoning: z.object({ effort: reasoningEffortSchema }).strict().optional(),
-  })
-  .strict();
+export const responsesRequestSchema = z.looseObject({
+  model: z.string().min(1),
+  input: z.union([z.string().min(1), z.array(responseInputMessage).min(1).max(200)]),
+  instructions: z.string().min(1).optional(),
+  stream: z.boolean().default(false),
+  user: z.string().optional(),
+  conversation_id: conversationIdSchema.optional(),
+  /** Run this turn in a Temporary Chat that is not kept in account history. */
+  temporary: z.boolean().optional(),
+  reasoning_effort: reasoningEffortSchema.optional(),
+  /** Anthropic-style alias accepted for parity with /v1/messages; same effect. */
+  reasoning: z.object({ effort: reasoningEffortSchema }).strict().optional(),
+});
 
 export type ChatCompletionRequest = z.infer<typeof chatCompletionRequestSchema>;
 export type ResponsesRequest = z.infer<typeof responsesRequestSchema>;

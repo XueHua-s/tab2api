@@ -49,14 +49,27 @@ describe('API schemas', () => {
     ).toThrow();
   });
 
-  it('rejects unknown fields', () => {
-    expect(() =>
-      chatCompletionRequestSchema.parse({
-        model: 'chatgpt-web',
-        messages: [{ role: 'user', content: 'hello' }],
-        temperature: 0.5,
-      }),
-    ).toThrow();
+  it('preserves OpenAI-compatible relay fields on chat and Responses requests', () => {
+    const chat = chatCompletionRequestSchema.parse({
+      model: 'chatgpt-web',
+      messages: [{ role: 'user', content: 'hello' }],
+      temperature: 0.5,
+      max_tokens: 256,
+      stream_options: { include_usage: true },
+    });
+    expect(chat).toMatchObject({
+      temperature: 0.5,
+      max_tokens: 256,
+      stream_options: { include_usage: true },
+    });
+
+    const responses = responsesRequestSchema.parse({
+      model: 'chatgpt-web',
+      input: 'hello',
+      top_p: 0.8,
+      max_output_tokens: 256,
+    });
+    expect(responses).toMatchObject({ top_p: 0.8, max_output_tokens: 256 });
   });
 
   it('validates the supported image and speech subsets', () => {

@@ -91,7 +91,7 @@ export const UI_SELECTORS = {
   ],
   /**
    * The composer's effort/reasoning control. The exact control varies by plan tier and UI
-   * revision; absent controls fail explicitly rather than silently keeping the default.
+   * revision; absent controls keep the account's current web setting.
    */
   effortButton: [
     'button[data-testid*="effort" i]',
@@ -153,7 +153,7 @@ export const UI_SELECTORS = {
 /**
  * Visible labels a requested effort is matched against, most specific first. Labels are
  * English and Vietnamese candidates because ChatGPT localizes the composer; a request that
- * matches nothing fails `ui_changed` instead of guessing at a neighbouring effort.
+ * matches nothing keeps the account's current web setting instead of guessing at a neighbouring effort.
  */
 export const EFFORT_LABELS = {
   minimal: [/^instant$/i, /^light$/i, /^nhanh$/i, /instant/i, /light/i],

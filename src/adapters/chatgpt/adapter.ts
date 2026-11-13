@@ -819,18 +819,17 @@ export class ChatGptAdapter implements WebChatProvider {
   }
 
   /**
-   * Drives the composer's effort control for an explicit `reasoning_effort`. The control
-   * and its labels vary by plan and locale; an unlisted label fails `ui_changed` rather
-   * than silently sending at whatever effort the account happened to leave selected.
+   * Applies an explicit reasoning effort when the account exposes the control.
+   * If the picker is unavailable or has different labels, keep the current web setting.
    */
   private async selectEffort(page: Page, effort: NonNullable<GenerateRequest['effort']>) {
     const control = await firstVisible(page, UI_SELECTORS.effortButton);
     if (control === undefined) {
-      throw new AppError(
-        'ui_changed',
-        'The ChatGPT effort control is unavailable.',
-        'The account may not expose effort selection; remove `reasoning_effort`.',
+      this.logger.debug(
+        { effort },
+        'ChatGPT effort control unavailable; preserving the current web setting',
       );
+      return;
     }
     await control.click();
     const options = page.locator(UI_SELECTORS.effortOption.join(','));
@@ -844,10 +843,10 @@ export class ChatGptAdapter implements WebChatProvider {
         // Try the next candidate label.
       }
     }
-    throw new AppError(
-      'ui_changed',
-      `ChatGPT offered no effort option matching "${effort}".`,
-      'Remove `reasoning_effort` or report the offered labels in a selector bug.',
+    await page.keyboard.press('Escape').catch(() => undefined);
+    this.logger.debug(
+      { effort },
+      'ChatGPT did not offer the requested effort; preserving the current web setting',
     );
   }
 

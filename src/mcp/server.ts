@@ -72,7 +72,7 @@ const TOOL_DEFINITIONS = [
           type: 'string',
           enum: ['minimal', 'low', 'medium', 'high', 'xhigh'],
           description:
-            'Composer effort level. Fails when the account picker does not offer the option; never changes the model.',
+            'Composer effort hint. Sets the picker when available; otherwise preserves the current web setting. Never changes the model.',
         },
         conversation_id: {
           type: 'string',

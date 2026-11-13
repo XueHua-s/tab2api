@@ -10,6 +10,7 @@ class FakeLocator {
   constructor(
     private readonly visible: boolean,
     private readonly countValue = 0,
+    private readonly optionMatch = true,
   ) {}
   first(): this {
     return this;
@@ -32,6 +33,12 @@ class FakeLocator {
   async fill(_value: string): Promise<void> {}
   async press(_key: string): Promise<void> {}
   async click(): Promise<void> {}
+  filter(): this {
+    return this;
+  }
+  async waitFor(): Promise<void> {
+    if (!this.visible || !this.optionMatch) throw new Error('simulated missing option');
+  }
 }
 
 class FakePage {
@@ -41,7 +48,11 @@ class FakePage {
   currentUrl = 'https://chatgpt.com/';
   waits = 0;
 
-  constructor(private readonly mode: 'ready' | 'delayed' | 'login' | 'unknown') {}
+  keyboard = { press: async (_key: string): Promise<void> => {} };
+
+  constructor(
+    private readonly mode: 'ready' | 'delayed' | 'login' | 'unknown' | 'effort-no-match',
+  ) {}
   async goto(): Promise<void> {
     this.navigations += 1;
   }
@@ -60,7 +71,14 @@ class FakePage {
     const composer = selector === '#prompt-textarea' && ready;
     const send = selector === 'button[data-testid="send-button"]' && ready;
     const login = selector === 'button[data-testid="login-button"]' && this.mode === 'login';
-    return new FakeLocator(composer || send || login) as unknown as Locator;
+    const effort =
+      selector === 'button[data-testid*="effort" i]' && this.mode === 'effort-no-match';
+    const options = selector.includes('[role="menuitemradio"]') && this.mode === 'effort-no-match';
+    return new FakeLocator(
+      composer || send || login || effort || options,
+      0,
+      !options,
+    ) as unknown as Locator;
   }
   async close(): Promise<void> {
     if (this.failClose) throw new Error('simulated page cleanup failure');
@@ -73,7 +91,7 @@ class FakePage {
 
 class FakeBrowser implements BrowserController {
   readonly page: FakePage;
-  constructor(mode: 'ready' | 'delayed' | 'login' | 'unknown') {
+  constructor(mode: 'ready' | 'delayed' | 'login' | 'unknown' | 'effort-no-match') {
     this.page = new FakePage(mode);
   }
   async getPage(): Promise<Page> {
@@ -99,6 +117,30 @@ class DeferredBrowser implements BrowserController {
 }
 
 describe('ChatGPT adapter failure cleanup', () => {
+  it('preserves the current effort when the account has no effort control', async () => {
+    const browser = new FakeBrowser('ready');
+    const adapter = new ChatGptAdapter(browser, testConfig(), createLogger('silent'));
+    const selectEffort = (
+      adapter as unknown as {
+        selectEffort: (page: Page, effort: 'high') => Promise<void>;
+      }
+    ).selectEffort.bind(adapter);
+
+    await expect(selectEffort(browser.page as unknown as Page, 'high')).resolves.toBeUndefined();
+  });
+
+  it('preserves the current effort when no requested option matches', async () => {
+    const browser = new FakeBrowser('effort-no-match');
+    const adapter = new ChatGptAdapter(browser, testConfig(), createLogger('silent'));
+    const selectEffort = (
+      adapter as unknown as {
+        selectEffort: (page: Page, effort: 'high') => Promise<void>;
+      }
+    ).selectEffort.bind(adapter);
+
+    await expect(selectEffort(browser.page as unknown as Page, 'high')).resolves.toBeUndefined();
+  });
+
   it('waits for the asynchronously rendered initial composer', async () => {
     const browser = new FakeBrowser('delayed');
     const adapter = new ChatGptAdapter(browser, testConfig(), createLogger('silent'));

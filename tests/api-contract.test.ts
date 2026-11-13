@@ -442,13 +442,17 @@ describe('Fastify API contract', () => {
     await app.close();
   });
 
-  it('rejects invalid request fields rather than silently ignoring them', async () => {
+  it('rejects invalid supported field values rather than silently ignoring them', async () => {
     const app = server(new FakeProvider());
     const response = await app.inject({
       method: 'POST',
       url: '/v1/chat/completions',
       headers: auth,
-      payload: { model: 'x', messages: [{ role: 'user', content: 'x' }], tools: [] },
+      payload: {
+        model: 'x',
+        messages: [{ role: 'user', content: 'x' }],
+        reasoning_effort: 'extreme',
+      },
     });
     expect(response.statusCode).toBe(400);
     expect(response.json().error.code).toBe('invalid_request');

@@ -30,7 +30,7 @@ Optional `conversation_id` continues an existing ChatGPT conversation instead of
 
 Optional `temporary: true` runs the turn in a ChatGPT Temporary Chat, which the product does not keep in account history. It cannot be combined with `conversation_id` or a project-scoped route — a Temporary Chat has no persistent identity to continue or project context to inherit — and such combinations are rejected as `invalid_request`. `TAB2API_TEMPORARY_CHAT=true` makes temporary mode the default for requests that omit the field; pass `temporary: false` to opt a single request out. Because this is UI-mediated, the adapter verifies that a Temporary Chat indicator is actually present and fails `ui_changed` rather than silently writing history when ChatGPT changes the feature.
 
-Optional `reasoning_effort` accepts `minimal`, `low`, `medium`, `high`, or `xhigh` and drives the composer's effort control before the prompt is sent. It never changes the selected model, so it cannot exceed what the account's picker offers; when the control or a matching option is missing the request fails `ui_changed` instead of silently keeping the account default.
+Optional `reasoning_effort` accepts `minimal`, `low`, `medium`, `high`, or `xhigh` and drives the composer's effort control before the prompt is sent when the account exposes that control and a matching option. It never changes the selected model. If the control or requested option is unavailable, tab2api keeps the current web setting and continues the request.
 
 For `stream: true`, `Content-Type` is `text/event-stream`, `X-Tab2api-Stream-Mode` is `buffered`, role/content/final chunks are emitted, and the stream ends with `data: [DONE]`.
 
